@@ -58,6 +58,19 @@ class LineService:
                         "color": "#06c755",
                         "height": "sm",
                         "flex": 2
+                    },
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "postback",
+                            "label": "⋮",  # 縦の三点リーダー
+                            "data": f"action=edit_menu&id={task.get('id')}"
+                        },
+                        "width": "40px",      # 幅を狭くして「︙」を際立たせる
+                        "height": "sm",
+                        "style": "secondary", # 目立ちすぎない背景色
+                        "color": "#eeeeee",
+                        "margin": "sm"
                     }
                 ],
                 "paddingAll": "10px",
@@ -109,3 +122,54 @@ class LineService:
                 contents["body"]["contents"].append(task_item)
 
         return FlexMessage(alt_text="完了タスク一覧", contents=FlexContainer.from_dict(contents))
+
+    @staticmethod # タスク編集メニューのFlex Message
+    def create_edit_menu_flex(task):
+        task_id = task.get("id")
+        title = task.get("title")
+
+        contents = {
+            "type": "bubble",
+            # "size": "std", # 少し小さめのバブルにする
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    # ヘッダー：選択中のタスク名
+                    {"type": "text", "text": "タスク操作", "size": "xs", "color": "#aaaaaa", "weight": "bold"},
+                    {"type": "text", "text": title, "weight": "bold", "size": "md", "margin": "sm", "wrap": True},
+                    {"type": "separator", "margin": "lg"},
+                    
+                    # ボタン群
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "margin": "lg",
+                        "spacing": "sm",
+                        "contents": [
+                            {
+                                "type": "button",
+                                "style": "link", # 枠なしのスッキリした見た目
+                                "height": "sm",
+                                "action": {"type": "postback", "label": "✅ 完了にする", "data": f"action=done&id={task_id}"}
+                            },
+                            {
+                                "type": "button",
+                                "style": "link",
+                                "height": "sm",
+                                "action": {"type": "postback", "label": "✏️ 編集する", "data": f"action=edit_title_req&id={task_id}"}
+                            },
+                            {
+                                "type": "button",
+                                "style": "link",
+                                "height": "sm",
+                                "color": "#ff5555", # 削除は赤字
+                                "action": {"type": "postback", "label": "🗑️ 削除する", "data": f"action=delete_confirm&id={task_id}"}
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        return FlexMessage(alt_text="メニュー", contents=FlexContainer.from_dict(contents))
+
