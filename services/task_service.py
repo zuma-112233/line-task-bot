@@ -3,8 +3,11 @@ from firebase_admin import firestore  # ← これを追加！
 from database.firestore import db
 
 class TaskService:
+    SHARED_ID = "common_group_001"
     @staticmethod # タスク追加のロジック
     def add_task(user_id, text):
+
+        target_id = TaskService.SHARED_ID
         """
         ユーザーのメッセージからタスク名と日付を抽出し、Firestoreに保存する
         例: 「役所で手続き 5/20」 -> title: 役所で手続き, date: 5/20
@@ -22,9 +25,10 @@ class TaskService:
             task_title = text.replace(task_date, "").strip()
         
         # Firestoreへ保存
-        task_ref = db.collection("users").document(user_id).collection("tasks").document()
+        task_ref = db.collection("users").document(target_id).collection("tasks").document()
         task_data = {
             "title": task_title,
+            "created_by": user_id,
             "date": task_date,
             "done": False,
             "created_at": firestore.SERVER_TIMESTAMP # 保存時刻
@@ -36,7 +40,8 @@ class TaskService:
     @staticmethod # タスク一覧取得のロジック
     def get_all_tasks(user_id):
         """ユーザーの全タスクを取得する"""
-        tasks_ref = db.collection("users").document(user_id).collection("tasks")
+        target_id = TaskService.SHARED_ID
+        tasks_ref = db.collection("users").document(target_id).collection("tasks")
         # 未完了のものを期限順に並べるなどの処理もここで可能
         docs = tasks_ref.where("done", "==", False).stream()
         
@@ -51,8 +56,9 @@ class TaskService:
     @staticmethod # タスク完了のロジック
     def complete_task(user_id, task_id):
         """指定したタスクを完了にする"""
+        target_id = TaskService.SHARED_ID
         try:
-            db.collection("users").document(user_id) \
+            db.collection("users").document(target_id) \
               .collection("tasks").document(task_id) \
               .update({"done": True}) # 削除ではなく更新
             print(f"DEBUG: Task {task_id} を完了済みにしました")
@@ -66,7 +72,8 @@ class TaskService:
         """
         完了済み（done=True）のタスクだけを取得する
         """
-        tasks_ref = db.collection("users").document(user_id).collection("tasks")
+        target_id = TaskService.SHARED_ID
+        tasks_ref = db.collection("users").document(target_id).collection("tasks")
         # where句を使ってフィルタリング
         docs = tasks_ref.where("done", "==", True).stream()
         
